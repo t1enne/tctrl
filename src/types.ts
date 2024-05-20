@@ -1,3 +1,14 @@
+export interface CliOptions {
+  r: number;
+  relative: number;
+  d: string;
+  date: string;
+  m: number;
+  month: number;
+  h: boolean;
+  help: boolean;
+}
+
 export interface UserHours {
   notes: string;
   hours: string;

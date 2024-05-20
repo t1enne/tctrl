@@ -3,6 +3,16 @@ export const AUTH_HEADERS = {
   Authorization: "",
 };
 
+export const WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
 export const req = async <T>(
   url: string,
   body: Record<string, unknown>,
