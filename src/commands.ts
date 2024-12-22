@@ -60,25 +60,27 @@ Usage: tpca [options]
     );
     Deno.exit(0);
   },
-  async month(m: number) {
+  async month(months: number[]) {
     const user = await loadUser();
     const now = dayjs.utc();
-    const selectedMonth = now.utc().set("month", (m as number) - 1);
-    const endOfMonth = selectedMonth.endOf("month").date();
-    const days = await getWorkedHrs(
-      user.id,
-      selectedMonth.set("date", 1),
-      selectedMonth.endOf("month").endOf("day"),
-    );
-    for (let i = 1; i <= endOfMonth; i++) {
-      const date = selectedMonth.utc().set("date", i);
-      if (date.isAfter(now)) {
-        continue;
-      }
-      const userHours = days.filter((d) =>
-        d.date.slice(0, 10) === date.startOf("day").toISOString().slice(0, 10)
+    for (const m of months) {
+      const selectedMonth = now.utc().set("month", (m as number) - 1);
+      const endOfMonth = selectedMonth.endOf("month").date();
+      const days = await getWorkedHrs(
+        user.id,
+        selectedMonth.set("date", 1),
+        selectedMonth.endOf("month").endOf("day"),
       );
-      console.log(getDateInfo(date, userHours));
+      for (let i = 1; i <= endOfMonth; i++) {
+        const date = selectedMonth.utc().set("date", i);
+        if (date.isAfter(now)) {
+          continue;
+        }
+        const userHours = days.filter((d) =>
+          d.date.slice(0, 10) === date.startOf("day").toISOString().slice(0, 10)
+        );
+        console.log(getDateInfo(date, userHours));
+      }
     }
   },
   async date(dates: string[]) {

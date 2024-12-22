@@ -41,7 +41,7 @@ async function main() {
       await Commands.date([args.values.date].concat(args.positionals));
       break;
     case !!args.values.month:
-      await Commands.month(+args.values.month);
+      await Commands.month([+args.values.month].concat(args.positionals));
       break;
     case !!args.values.relative:
       await Commands.relative(+args.values.relative);
