@@ -1,16 +1,15 @@
-export interface CliOptions {
-  r: number;
-  relative: number;
-  d: string;
+export type UploadBody = {
+  notes: string;
+  hours: string;
   date: string;
-  m: number;
-  month: number;
-  h: boolean;
-  help: boolean;
-}
+  releaseId: string;
+  hoursTagId: string;
+  userId: string;
+};
 
 export interface UserHours {
   notes: string;
+  date: string;
   hours: string;
   release: {
     name: string;

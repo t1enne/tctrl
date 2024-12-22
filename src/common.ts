@@ -1,7 +1,7 @@
-import dayjs from "npm:dayjs";
-import pc from "npm:picocolors";
+import dayjs from "dayjs";
 import { BaseDto, UserHours } from "./types.ts";
-import { req } from "./utils.ts";
+import { req, WEEKDAYS } from "./utils.ts";
+import pc from "npm:picocolors";
 
 export const STATE = {
   clients: [] as BaseDto[],
@@ -10,10 +10,53 @@ export const STATE = {
   user: {} as { id: string; token: string },
 };
 
-export const getWorkedHrs = async (inputDate: dayjs.Dayjs, userId: string) => {
-  console.log(inputDate);
-  const from = dayjs(inputDate).utc().startOf("day").toISOString();
-  const to = dayjs(inputDate).utc().endOf("day").toISOString();
+const pad = (dir: "l" | "r") => (l: number, str: string, ch = " ") =>
+  dir === "l"
+    ? ch.repeat(Math.max(0, l - str.length)) + str
+    : str + ch.repeat(Math.max(0, l - str.length));
+
+export const leftPad = pad("l");
+export const rightPad = pad("r");
+
+export const isWeekday = (d: number) => 0 < d && d < 6;
+
+const getDayStart = (d: dayjs.Dayjs) => dayjs(d).startOf("day").toISOString();
+const getDayEnd = (d: dayjs.Dayjs) => dayjs(d).endOf("day").toISOString();
+
+export const getDateInfo = (
+  date: dayjs.Dayjs,
+  uploadedDay: UserHours[] = [],
+) => {
+  const today = dayjs.utc().isSame(date) ? "* " : "";
+  const dayOfWeek = `${today}${WEEKDAYS[date.day()]}`;
+
+  const fmt = (a: string) =>
+    uploadedDay.length || !isWeekday(date.day())
+      ? pc.dim(a)
+      : pc.bold(pc.yellow(a));
+
+  const str = `${date.format("YY-MM-DD")}     ${dayOfWeek}`;
+  return fmt(str + getHoursInfo(uploadedDay));
+};
+
+const getHoursInfo = (data: UserHours[]) => {
+  return data.length === 0 ? "" : "\n" + data.reduce(
+    (acc, { release, hours, hoursTag }) => {
+      const prjName = `[${(release.project.name.slice(0, 15))}] `;
+      const relName = `(${release.name})`;
+      const hrsTag = `{${hoursTag.name.slice(0, 3).toLowerCase()}}`;
+      const hrs = `${hours} `;
+      return acc + `${" ".repeat(13)}${hrs} ${prjName} ${relName} ${hrsTag}\n`;
+    },
+    "",
+  );
+};
+
+export const getWorkedHrs = async (
+  userId: string,
+  from: dayjs.Dayjs,
+  to?: dayjs.Dayjs,
+) => {
   const body = {
     relations: [
       "release",
@@ -25,15 +68,10 @@ export const getWorkedHrs = async (inputDate: dayjs.Dayjs, userId: string) => {
       userId,
       date: {
         _fn: 17,
-        args: [from, to],
+        args: [getDayStart(from), getDayEnd(to || from)],
       },
     },
   };
   const r = await req<UserHours[]>("/userHours/fb", body);
-  return r.data.reduce(
-    (acc, { release, hours, hoursTag }, i) =>
-      // deno-fmt-ignore
-      acc + `${pc.bold(pc.yellow(release.project.name))}: ${ pc.italic(release.name) }: ${pc.green(`󱑂  ${hours} (${hoursTag.name.slice(0, 3)})`)}${i === r.data.length -1 ? "" : "\n" }`,
-    "",
-  );
+  return r.data;
 };

@@ -1,8 +1,8 @@
 import { confirm, input, select } from "npm:@inquirer/prompts";
 import { STATE } from "../src/common.ts";
-import { BaseDto } from "../src/types.ts";
+import { BaseDto, UploadBody } from "../src/types.ts";
 import { req } from "../src/utils.ts";
-import { Dayjs } from "npm:dayjs";
+import dayjs, { Dayjs } from "npm:dayjs";
 
 const pickTag = async () => {
   const { data } = await req<Array<BaseDto>>("/hoursTags/fb", {});
@@ -47,48 +47,48 @@ const pickClient = async () => {
   });
 };
 
-const getInputHrs = async (hrsLeft: number) =>
+const getInputHrs = async () =>
   await input({
     message: "Hours:",
     validate: (v) => {
       const float = parseFloat(v);
       if (isNaN(float)) return "Must be a number";
       if (0 > float) return "Must be positive";
-      if (float > hrsLeft) return `Can't be more than ${hrsLeft} hours`;
+      if (float > 8) return `Can't be more than ${8} hours`;
       return Number.isFinite(float);
     },
   });
 
-export async function uploadDate(
-  user: { id: string; token: string },
-  date: Dayjs,
+export async function uploadWorkedHrs(
+  body: Omit<UploadBody, "date">,
+  date: dayjs.Dayjs,
 ) {
-  let total = 0;
-  while (total < 8) {
-    const client = await pickClient();
-    const project = await pickProject(client._id);
-    const release = await pickRelease(project._id);
-    const tag = await pickTag();
-    const toUploadBody = {
-      notes: await input({ message: "Notes:" }),
-      hours: await getInputHrs(8 - total),
-      date: date.toISOString(),
-      releaseId: release._id,
-      hoursTagId: tag._id,
-      userId: user.id,
-    };
+  const { data } = await req<{ notes: string; hours: string }>(
+    "/userHours",
+    { ...body, date: date.toISOString() },
+  );
+  return data.hours;
+}
 
-    const { data } = await req<{ notes: string; hours: string }>(
-      "/userHours",
-      toUploadBody,
-    );
-    total += parseFloat(toUploadBody.hours);
-    console.log(`Saved ${data.notes} X ${data.hours}`);
-    if (total < 8) {
-      const shouldContinue = await confirm({ message: "Continue?" });
-      if (!shouldContinue) {
-        break;
-      }
-    }
-  }
+export async function fillWorkedHrs(user: { id: string; token: string }) {
+  const client = await pickClient();
+  const project = await pickProject(client._id);
+  const release = await pickRelease(project._id);
+  const tag = await pickTag();
+  const toUploadBody = {
+    notes: await input({ message: "Notes:" }),
+    hours: await getInputHrs(),
+    releaseId: release._id,
+    hoursTagId: tag._id,
+    userId: user.id,
+  };
+  return toUploadBody;
+  // total += parseFloat(toUploadBody.hours);
+  // console.log(`Saved ${data.notes} X ${data.hours}`);
+  // if (total < 8) {
+  //   const shouldContinue = await confirm({ message: "Continue?" });
+  //   if (!shouldContinue) {
+  //     break;
+  //   }
+  // }
 }
