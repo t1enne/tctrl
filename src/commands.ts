@@ -89,7 +89,7 @@ Usage: tpca [options]
     for (const date of dates) {
       const inputDate = getInputDate(date);
       const worked = await getWorkedHrs(user.id, inputDate) || [];
-      console.log(pc.dim(getDateInfo(inputDate, worked)));
+      console.log(getDateInfo(inputDate, worked));
       await uploadWorkedHrs(workedHrs, inputDate);
     }
     Deno.exit(0);

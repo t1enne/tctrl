@@ -31,22 +31,23 @@ export const getDateInfo = (
   const dayOfWeek = `${today}${WEEKDAYS[date.day()]}`;
 
   const fmt = (a: string) =>
-    uploadedDay.length || !isWeekday(date.day())
-      ? pc.dim(a)
-      : pc.bold(pc.yellow(a));
+    uploadedDay.length || !isWeekday(date.day()) ? a : pc.bold(pc.yellow(a));
 
   const str = `${date.format("YY-MM-DD")}     ${dayOfWeek}`;
-  return fmt(str + getHoursInfo(uploadedDay));
+  return fmt(str) + getHoursInfo(uploadedDay);
 };
 
 const getHoursInfo = (data: UserHours[]) => {
-  return data.length === 0 ? "" : "\n" + data.reduce(
+  return data.reduce(
     (acc, { release, hours, hoursTag }) => {
       const prjName = `[${(release.project.name.slice(0, 15))}] `;
       const relName = `(${release.name})`;
       const hrsTag = `{${hoursTag.name.slice(0, 3).toLowerCase()}}`;
       const hrs = `${hours} `;
-      return acc + `${" ".repeat(13)}${hrs} ${prjName} ${relName} ${hrsTag}\n`;
+      return acc +
+        pc.gray(
+          pc.dim(`\n${" ".repeat(13)}${hrs} ${prjName} ${relName} ${hrsTag}`),
+        );
     },
     "",
   );
