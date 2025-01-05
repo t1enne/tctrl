@@ -24,7 +24,7 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		configPath, _ := rootCmd.Flags().GetString("config")
 		config := src.GetConfig(configPath)
-		fromDate, _ := handleArgs(cmd)
+		fromDate, _ := src.HandleArgs(cmd)
 		fromIso := src.StartOfDay(fromDate).Format(src.DATE_ISO_TMPL)
 		// toIso := src.EndOfDay(toDate).Format(src.DATE_ISO_TMPL)
 		tags := src.GetActiveTags(config)

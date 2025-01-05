@@ -136,6 +136,18 @@ type User struct {
 	Surname     string  `json:"surname"`
 	IsDeletable bool    `json:"isDeletable"`
 }
+type AddDayOffPayload struct {
+	User struct {
+		ID string `json:"_id"`
+	} `json:"user"`
+	StartDate string  `json:"startDate"`
+	EndDate   string  `json:"endDate"`
+	StartTime string  `json:"startTime"`
+	EndTime   string  `json:"endTime"`
+	Hours     float64 `json:"hours"`
+	Notes     string  `json:"notes"`
+	Status    string  `json:"status"`
+}
 
 func readConfig(configPath string) []byte {
 	data, err := os.ReadFile(configPath)
@@ -202,6 +214,15 @@ func AddHours(h AddHoursPayload, c UserConfig) {
 		log.Panicf("Failed to marshal hours: %s\n", err)
 	}
 	Post("userHours", string(body), c, &r)
+}
+
+func AddDayOff(d AddDayOffPayload, c UserConfig) {
+	var r map[string]interface{}
+	body, err := json.Marshal(d)
+	if err != nil {
+		log.Panicf("Failed to marshal dayoff: %s\n", err)
+	}
+	Post("dayoffs", string(body), c, &r)
 }
 
 func Post(url string, body string, c UserConfig, result interface{}) {

@@ -24,7 +24,7 @@ and usage of using your command.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		configPath, _ := rootCmd.Flags().GetString("config")
 		config := src.GetConfig(configPath)
-		fromDate, toDate := handleArgs(cmd)
+		fromDate, toDate := src.HandleArgs(cmd)
 		fromIso := src.StartOfDay(fromDate).Format(src.DATE_ISO_TMPL)
 		toIso := src.EndOfDay(toDate).Format(src.DATE_ISO_TMPL)
 		p := fmt.Sprintf(`{ 

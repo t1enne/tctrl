@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -23,7 +22,7 @@ and usage of using your command. For example:
 	Run: func(cmd *cobra.Command, args []string) {
 		configPath, _ := rootCmd.Flags().GetString("config")
 		config := src.GetConfig(configPath)
-		fromDate, toDate := handleArgs(cmd)
+		fromDate, toDate := src.HandleArgs(cmd)
 		fromIso := src.StartOfDay(fromDate).Format(src.DATE_ISO_TMPL)
 		toIso := src.EndOfDay(toDate).Format(src.DATE_ISO_TMPL)
 		p := fmt.Sprintf(`{ 
@@ -57,32 +56,4 @@ and usage of using your command. For example:
 
 func init() {
 	rootCmd.AddCommand(logCmd)
-}
-
-func handleArgs(cmd *cobra.Command) (time.Time, time.Time) {
-	exactArg, _ := cmd.Flags().GetString("exact")
-	fromArg, _ := cmd.Flags().GetString("from")
-	toArg, _ := cmd.Flags().GetString("to")
-	// NO ARGS
-	if exactArg == "" && fromArg == "" && toArg == "" {
-		n := time.Now()
-		return src.StartOfDay(n), src.EndOfDay(n)
-	}
-	// BOTH EXACT AND FROM/TO
-	if exactArg != "" && (fromArg != "" || toArg != "") {
-		log.Panicln("Cannot set both --exact and --from or --to")
-	}
-	// ONLY EXACT
-	if exactArg != "" {
-		return src.StartOfDay(src.StrToDate(exactArg)), src.EndOfDay(src.StrToDate(exactArg))
-	}
-	// FROM
-	fromDate := src.StrToDate(fromArg)
-	var toDate time.Time
-	if toArg != "" {
-		toDate = src.StrToDate(toArg)
-	} else {
-		toDate = time.Now()
-	}
-	return fromDate, toDate
 }

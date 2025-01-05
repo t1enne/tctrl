@@ -3,11 +3,14 @@ package src
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/spf13/cobra"
 )
 
 // Year: "2006" "06"
@@ -21,6 +24,34 @@ import (
 // AM/PM mark: "PM"
 var DATE_ISO_TMPL = "2006-01-02T15:04:05.000Z"
 var DATE_READABLE_TMPL = "Mon, 06 Jan 02 (15:04)"
+
+func HandleArgs(cmd *cobra.Command) (time.Time, time.Time) {
+	exactArg, _ := cmd.Flags().GetString("exact")
+	fromArg, _ := cmd.Flags().GetString("from")
+	toArg, _ := cmd.Flags().GetString("to")
+	// NO ARGS
+	if exactArg == "" && fromArg == "" && toArg == "" {
+		n := time.Now()
+		return StartOfDay(n), EndOfDay(n)
+	}
+	// BOTH EXACT AND FROM/TO
+	if exactArg != "" && (fromArg != "" || toArg != "") {
+		log.Panicln("Cannot set both --exact and --from or --to")
+	}
+	// ONLY EXACT
+	if exactArg != "" {
+		return StartOfDay(StrToDate(exactArg)), EndOfDay(StrToDate(exactArg))
+	}
+	// FROM
+	fromDate := StrToDate(fromArg)
+	var toDate time.Time
+	if toArg != "" {
+		toDate = StrToDate(toArg)
+	} else {
+		toDate = time.Now()
+	}
+	return fromDate, toDate
+}
 
 func GetConfigPath() string {
 	configDir, err := os.UserConfigDir()
@@ -45,6 +76,82 @@ func StrToDate(dateStr string) time.Time {
 		log.Panicf("Error parsing date: %s", dateStr)
 	}
 	return parsedDate
+}
+
+func ToFloat(s string) float64 {
+	value, e := strconv.ParseFloat(s, 64)
+	if e != nil {
+		log.Panicln("Failed to conver value " + s)
+	}
+	return value
+}
+
+func CountOffHours(from time.Time, to time.Time) float64 {
+	count := 0.0
+	for dayIter := from; dayIter.Before(to); dayIter = StartOfWorkingDay(dayIter.Add(time.Hour * 24)) {
+		if !IsWeekend(dayIter) {
+			count += 8
+		}
+	}
+	return count
+}
+
+func CalcWorkedHours(from time.Time, to time.Time) float64 {
+	if from.Day() != to.Day() {
+		log.Panicln("from and to must be on the same day")
+	}
+
+	// Define key time boundaries
+	startOfDay := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	workStart := startOfDay.Add(7*time.Hour + 30*time.Minute) // 7:30
+	lunchStart := startOfDay.Add(12 * time.Hour)              // 12:00
+	lunchEnd := startOfDay.Add(13 * time.Hour)                // 13:00
+	workEnd := startOfDay.Add(16*time.Hour + 30*time.Minute)  // 16:30
+
+	// Upperbound variable to keep time within valid ranges
+	upperBound := func(t time.Time, min time.Time, max time.Time) time.Time {
+		if t.Before(min) {
+			return min
+		}
+		if t.After(max) {
+			return max
+		}
+		return t
+	}
+
+	// Adjust `from` and `to` within workday boundaries
+	from = upperBound(from, workStart, workEnd)
+	to = upperBound(to, workStart, workEnd)
+
+	// If the range is entirely outside of work hours
+	if from.After(to) {
+		return 0
+	}
+
+	// Calculate hours
+	totalHours := 0.0
+
+	// Morning session: workStart to lunchStart
+	if from.Before(lunchStart) {
+		morningEnd := upperBound(to, workStart, lunchStart)
+		totalHours += morningEnd.Sub(from).Hours()
+	}
+
+	// Afternoon session: lunchEnd to workEnd
+	if to.After(lunchEnd) {
+		afternoonStart := upperBound(from, lunchEnd, workEnd)
+		totalHours += to.Sub(afternoonStart).Hours()
+	}
+
+	return math.Min(totalHours, 8.0)
+}
+
+func StartOfWorkingDay(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 7, 30, 0, 000000000, t.UTC().Location())
+}
+
+func EndOfWorkingDay(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 16, 30, 0, 000000000, t.UTC().Location())
 }
 
 func StartOfDay(t time.Time) time.Time {

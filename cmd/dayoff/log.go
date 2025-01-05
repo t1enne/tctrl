@@ -18,8 +18,6 @@ var DayOffLogCmd = &cobra.Command{
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("called dayoff log")
-
 		configPath, _ := DayOffCmd.Flags().GetString("config")
 		config := src.GetConfig(configPath)
 		// // fromDate, toDate := handleArgs(cmd)
