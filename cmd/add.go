@@ -50,11 +50,9 @@ to quickly create a Cobra application.`,
 			HoursTagId: tag.ID,
 			UserId:     config.User.Id,
 		}
-		src.AddHours(toUpload, config)
 
-		action := func() { src.AddHours(toUpload, config) }
 		err := spinner.New().Title("Uploading entries ...").
-			Action(action).
+			Action(func() { src.AddHours(toUpload, config) }).
 			Run()
 		if err != nil {
 			log.Panicf("failed to start spinner: %s", err)
@@ -114,6 +112,7 @@ func createReleasesForm(releases []src.Release) (src.Release, error) {
 		huh.NewGroup(
 			// Ask the user for a base burger and toppings.
 			huh.NewSelect[src.Release]().
+				Height(8).
 				Title("Release").
 				Options(
 					releaseOptions...,
@@ -135,6 +134,7 @@ func createProjectsForm(projs []src.Project) (src.Project, error) {
 		huh.NewGroup(
 			// Ask the user for a base burger and toppings.
 			huh.NewSelect[src.Project]().
+				Height(8).
 				Title("Project").
 				Options(
 					projectOptions...,
@@ -156,6 +156,7 @@ func createTagsForm(tags []src.HoursTag) (src.HoursTag, error) {
 		huh.NewGroup(
 			// Ask the user for a base burger and toppings.
 			huh.NewSelect[src.HoursTag]().
+				Height(8).
 				Title("Tag").
 				Options(
 					tagOptions...,
@@ -177,6 +178,7 @@ func createCustomersForm(customers []src.Customer) (src.Customer, error) {
 		huh.NewGroup(
 			// Ask the user for a base burger and toppings.
 			huh.NewSelect[src.Customer]().
+				Height(8).
 				Title("Customer").
 				Options(
 					customerOptions...,

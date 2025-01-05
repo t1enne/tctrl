@@ -146,7 +146,7 @@ func GetCustomers(c UserConfig) []Customer {
 
 func GetProjects(customerId string, c UserConfig) []Project {
 	var d ApiResponse[Project]
-	Post("projects/fb", `{"order":{"name":"ASC"}}`, c, &d)
+	Post("projects/fb", `{"order":{"name":"ASC"},"where":{"customerId":"`+customerId+`"}}`, c, &d)
 	return d.Data
 }
 
