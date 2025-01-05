@@ -10,7 +10,17 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// Year: "2006" "06"
+// Month: "Jan" "January" "01" "1"
+// Day of the week: "Mon" "Monday"
+// Day of the month: "2" "_2" "02"
+// Day of the year: "__2" "002"
+// Hour: "15" "3" "03" (PM or AM)
+// Minute: "4" "04"
+// Second: "5" "05"
+// AM/PM mark: "PM"
 var DATE_ISO_TMPL = "2006-01-02T15:04:05.000Z"
+var DATE_READABLE_TMPL = "Mon, 06 Jan 02 (15:04)"
 
 func GetConfigPath() string {
 	configDir, err := os.UserConfigDir()
@@ -74,6 +84,16 @@ func FmtHours(h UserHours) string {
 
 func PrintHours(h UserHours, s lipgloss.Style) {
 	fmt.Println(s.Render(strings.Repeat(" ", 11) + FmtHours(h)))
+}
+
+func FmtDayOff(dayoff DayOff) string {
+	start, _ := time.Parse(DATE_ISO_TMPL, dayoff.StartDate)
+	end, _ := time.Parse(DATE_ISO_TMPL, dayoff.EndDate)
+	return fmt.Sprintf("%s - %s [%s] %s (%s)", start.Format(DATE_READABLE_TMPL), end.Format(DATE_READABLE_TMPL), dayoff.Hours, dayoff.Notes, dayoff.Status)
+}
+
+func PrintDayOff(doff DayOff, s lipgloss.Style) {
+	fmt.Println(s.Render(FmtDayOff(doff)))
 }
 
 func Filter[T any](slice []T, predicate func(T) bool) []T {

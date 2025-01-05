@@ -55,7 +55,9 @@ and usage of using your command. For example:
 	},
 }
 
-func init() {}
+func init() {
+	rootCmd.AddCommand(logCmd)
+}
 
 func handleArgs(cmd *cobra.Command) (time.Time, time.Time) {
 	exactArg, _ := cmd.Flags().GetString("exact")

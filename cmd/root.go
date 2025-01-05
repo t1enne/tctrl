@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/t1enne/tctrl/cmd/dayoff"
 	"github.com/t1enne/tctrl/src"
 )
 
@@ -36,8 +37,8 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(logCmd)
 	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(dayoff.DayOffCmd)
 	rootCmd.PersistentFlags().StringP("config", "c", src.GetConfigPath(), "config path")
 	rootCmd.PersistentFlags().StringP("exact", "e", "", "operate on <date>")
 	rootCmd.PersistentFlags().StringP("from", "f", "", "operate from <date>")

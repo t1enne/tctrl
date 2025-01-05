@@ -110,6 +110,32 @@ type AddHoursPayload struct {
 	HoursTagId string `json:"hoursTagId"`
 	UserId     string `json:"userId"`
 }
+type DayOff struct {
+	ID         string   `json:"_id"`
+	CreatedAt  string   `json:"createdAt"`
+	UpdatedAt  string   `json:"updatedAt"`
+	DeletedAt  *string  `json:"deletedAt"`
+	UserID     string   `json:"userId"`
+	HoursTagID string   `json:"hoursTagId"`
+	StartDate  string   `json:"startDate"`
+	EndDate    string   `json:"endDate"`
+	Notes      string   `json:"notes"`
+	Hours      string   `json:"hours"`
+	Status     string   `json:"status"`
+	User       User     `json:"user"`
+	HoursTag   HoursTag `json:"hoursTag"`
+}
+type User struct {
+	ID          string  `json:"_id"`
+	CreatedAt   string  `json:"createdAt"`
+	UpdatedAt   string  `json:"updatedAt"`
+	DeletedAt   *string `json:"deletedAt"`
+	Email       string  `json:"email"`
+	RoleID      string  `json:"roleId"`
+	Name        string  `json:"name"`
+	Surname     string  `json:"surname"`
+	IsDeletable bool    `json:"isDeletable"`
+}
 
 func readConfig(configPath string) []byte {
 	data, err := os.ReadFile(configPath)
@@ -160,6 +186,12 @@ func GetReleases(projId string, c UserConfig) []Release {
 func GetWorkedHours(payload string, c UserConfig) []UserHours {
 	var data ApiResponse[UserHours]
 	Post("userHours/fb", payload, c, &data)
+	return data.Data
+}
+
+func GetDayOff(payload string, c UserConfig) []DayOff {
+	var data ApiResponse[DayOff]
+	Post("dayoffs/fb", payload, c, &data)
 	return data.Data
 }
 
