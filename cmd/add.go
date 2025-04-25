@@ -6,7 +6,9 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"sort"
 	"strconv"
 
 	"github.com/charmbracelet/huh"
@@ -26,18 +28,13 @@ to quickly create a Cobra application.`,
 		config := src.GetConfig(configPath)
 		fromDate, _ := src.HandleArgs(cmd)
 		fromIso := src.StartOfDay(fromDate).Format(src.DATE_ISO_TMPL)
-		// toIso := src.EndOfDay(toDate).Format(src.DATE_ISO_TMPL)
+
 		tags := src.GetActiveTags(config)
 		tag, _ := createTagsForm(tags)
 
-		customers := src.GetCustomers(config)
-		customer, _ := createCustomersForm(customers)
-
-		projs := src.GetProjects(customer.ID, config)
-		proj, _ := createProjectsForm(projs)
-
-		releases := src.GetReleases(proj.ID, config)
-		release, _ := createReleasesForm(releases)
+		projs := src.GetProjects(config)
+		releases := src.GetReleases(config)
+		release, _ := createReleasesForm(projs, releases)
 
 		notes, _ := createNotesForm()
 		hours, _ := createHoursForm()
@@ -102,15 +99,27 @@ func createHoursForm() (string, error) {
 	return v, err
 }
 
-func createReleasesForm(releases []src.Release) (src.Release, error) {
+func createReleasesForm(projs []src.Project, releases []src.Release) (src.Release, error) {
+	projectMap := make(map[string]src.Project)
+	for _, proj := range projs {
+		projectMap[proj.ID] = proj
+	}
+
+	sort.Slice(releases, func(i, j int) bool {
+		projI := projectMap[releases[i].ProjectID]
+		projJ := projectMap[releases[j].ProjectID]
+		return projI.Name < projJ.Name
+	})
+
 	var v src.Release
 	releaseOptions := make([]huh.Option[src.Release], len(releases))
 	for i, release := range releases {
-		releaseOptions[i] = huh.NewOption[src.Release](release.Name, release)
+		proj := projectMap[release.ProjectID]
+		releaseOptions[i] = huh.NewOption[src.Release](fmt.Sprintf("[%s] - %s", proj.Name, release.Name), release)
 	}
+
 	f := huh.NewForm(
 		huh.NewGroup(
-			// Ask the user for a base burger and toppings.
 			huh.NewSelect[src.Release]().
 				Height(8).
 				Title("Release").
@@ -132,7 +141,6 @@ func createProjectsForm(projs []src.Project) (src.Project, error) {
 	}
 	f := huh.NewForm(
 		huh.NewGroup(
-			// Ask the user for a base burger and toppings.
 			huh.NewSelect[src.Project]().
 				Height(8).
 				Title("Project").
@@ -154,7 +162,6 @@ func createTagsForm(tags []src.HoursTag) (src.HoursTag, error) {
 	}
 	f := huh.NewForm(
 		huh.NewGroup(
-			// Ask the user for a base burger and toppings.
 			huh.NewSelect[src.HoursTag]().
 				Height(8).
 				Title("Tag").
@@ -166,26 +173,4 @@ func createTagsForm(tags []src.HoursTag) (src.HoursTag, error) {
 	)
 	err := f.Run()
 	return v, err
-}
-func createCustomersForm(customers []src.Customer) (src.Customer, error) {
-	var c src.Customer
-	customerOptions := make([]huh.Option[src.Customer], len(customers))
-	for i, c := range customers {
-		customerOptions[i] = huh.NewOption[src.Customer](c.Name, c)
-	}
-
-	f := huh.NewForm(
-		huh.NewGroup(
-			// Ask the user for a base burger and toppings.
-			huh.NewSelect[src.Customer]().
-				Height(8).
-				Title("Customer").
-				Options(
-					customerOptions...,
-				).
-				Value(&c),
-		),
-	)
-	err := f.Run()
-	return c, err
 }

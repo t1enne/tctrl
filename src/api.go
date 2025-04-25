@@ -176,21 +176,15 @@ func GetActiveTags(c UserConfig) []HoursTag {
 	return Filter(data.Data, func(t HoursTag) bool { return t.Name != "Ferie e permessi" })
 }
 
-func GetCustomers(c UserConfig) []Customer {
-	var d ApiResponse[Customer]
-	Post("customers/fb", `{"order":{"name":"ASC"}}`, c, &d)
-	return d.Data
-}
-
-func GetProjects(customerId string, c UserConfig) []Project {
+func GetProjects(c UserConfig) []Project {
 	var d ApiResponse[Project]
-	Post("projects/fb", `{"order":{"name":"ASC"},"where":{"customerId":"`+customerId+`"}}`, c, &d)
+	Post("projects/fb", `{"order":{"name":"ASC"}}`, c, &d)
 	return d.Data
 }
 
-func GetReleases(projId string, c UserConfig) []Release {
+func GetReleases(c UserConfig) []Release {
 	var data ApiResponse[Release]
-	p := fmt.Sprintf(`{"order":{"name":"ASC"},"where":{"projectId":"%s"}}`, projId)
+	p := `{"order":{"name":"ASC"},"include": ["project","project.customer"],"where": {"isArchived":false}}`
 	Post("releases/fb", p, c, &data)
 	return data.Data
 }
@@ -252,13 +246,15 @@ func request(method, url string, body string, c UserConfig, result interface{}) 
 	req.Header.Set("Authorization", "Bearer "+strings.TrimSpace(c.Token))
 	client := http.DefaultClient
 	resp, err := client.Do(req)
+	defer resp.Body.Close()
+
 	if err != nil {
 		fmt.Printf("Error performing request: %v\n", err)
 		os.Exit(1)
 	}
+
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		fmt.Printf("Error decoding JSON: %v\n", err)
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
 }
